@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ΔUDI⊙ LΔB PR⊙ | Mastering Engine</title>
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="16x16"   href="assets/icon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32"   href="assets/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="48x48"   href="assets/icon-48x48.png">
+  <link rel="icon" type="image/png" sizes="64x64"   href="assets/icon-64x64.png">
+  <link rel="icon" type="image/png" sizes="128x128" href="assets/icon-128x128.png">
+  <link rel="icon" type="image/png" sizes="256x256" href="assets/icon-256x256.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512x512.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="assets/icon-128x128.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="assets/icon-256x256.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #ff8c00;
+      --accent-dim: #945200;
+      --bg: #0a0a0a;
+      --panel: #111111;
+      --panel2: #0e0e0e;
+      --border: rgba(255,255,255,0.05);
+    }
+    body {
+      background: var(--bg);
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── TOP HEADER BAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: #0d0d0d;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: 22px;
+      color: #fff;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .logo span { color: var(--accent); filter: drop-shadow(0 0 6px rgba(255,140,0,0.6)); font-style: normal; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .build-tag { font-family: 'JetBrains Mono'; font-size: 8px; color: #444; letter-spacing: 0.2em; text-transform: uppercase; }
+    .led { width: 6px; height: 6px; border-radius: 50%; background: #222; flex-shrink: 0; }
+    .led.on { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+    /* ── GRID LAYOUT ── */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 1px;
+      background: var(--border);
+      min-height: calc(100vh - 52px);
+    }
+
+    /* each card */
+    .card {
+      background: var(--panel);
+      padding: 1.1rem 1.2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    /* checkerboard alternating */
+    .card:nth-child(even) { background: var(--panel2); }
+
+    /* spanning cards */
+    .span-2 { grid-column: span 2; }
+    .span-4 { grid-column: span 4; }
+
+    .card-title {
+      font-family: 'JetBrains Mono';
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      border-bottom: 1px solid rgba(255,140,0,0.12);
+      padding-bottom: 7px;
+      margin-bottom: 12px;
+    }
+
+    /* ── SIGNAL SOURCE ── */
+    .file-zone {
+      background: #080808;
+      border: 1px dashed rgba(255,140,0,0.2);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+    .file-zone:hover { border-color: var(--accent); }
+    .file-name {
+      font-family: 'JetBrains Mono';
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tech-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+      margin-top: 6px;
+    }
+    .tech-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono';
+      font-size: 8px;
+      text-transform: uppercase;
+      color: #444;
+    }
+    .tech-val { color: #888; }
+
+    /* ── METERS ── */
+    .meter { margin-bottom: 8px; }
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono';
+      font-size: 8px;
+      color: #555;
+      margin-bottom: 3px;
+    }
+    .meter-bg { background: #000; height: 5px; border-radius: 3px; overflow: hidden; }
+    .meter-fill { height: 100%; background: linear-gradient(90deg, #444, var(--accent)); transition: width 0.05s; }
+
+    /* ── CANVAS ── */
+    canvas {
+      background: #000;
+      border-radius: 6px;
+      width: 100%;
+      display: block;
+    }
+    #specCanvas  { height: 80px; margin-bottom: 8px; }
+    #scopeCanvas { height: 80px; }
+
+    /* ── SLIDERS ── */
+    .ctrl { margin-bottom: 10px; }
+    .ctrl-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .ctrl-left { display: flex; align-items: center; gap: 5px; }
+    .ctrl-name { font-size: 8px; font-family: 'JetBrains Mono'; color: #777; text-transform: uppercase; }
+    .ctrl-val  { font-size: 9px; font-family: 'JetBrains Mono'; color: var(--accent); }
+
+    .tip {
+      position: relative;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: #1c1c1c; border: 1px solid #333;
+      color: #555; font-size: 7px; font-family: 'JetBrains Mono';
+      cursor: default; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; user-select: none; transition: border-color 0.15s, color 0.15s;
+    }
+    .tip:hover { border-color: var(--accent); color: var(--accent); }
+    .tip-box {
+      display: none;
+      position: absolute; left: 0; top: calc(100% + 6px);
+      z-index: 300; width: 200px;
+      background: #181818; border: 1px solid rgba(255,140,0,0.2);
+      border-radius: 8px; padding: 8px 10px;
+      font-family: 'JetBrains Mono'; font-size: 7px; color: #999;
+      line-height: 1.5; box-shadow: 0 8px 24px rgba(0,0,0,0.9);
+      pointer-events: none;
+    }
+    .tip:hover .tip-box { display: block; }
+
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 22px; background: transparent; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track { height: 4px; background: #1f1f1f; border-radius: 9999px; }
+    input[type="range"]::-moz-range-track               { height: 4px; background: #1f1f1f; border-radius: 9999px; }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; height: 16px; width: 16px;
+      background: #222; border: 2.5px solid var(--accent); border-radius: 50%;
+      margin-top: -6px; box-shadow: 0 0 8px rgba(255,140,0,0.5);
+    }
+    input[type="range"]::-moz-range-thumb {
+      height: 16px; width: 16px; background: #222;
+      border: 2.5px solid var(--accent); border-radius: 50%;
+      box-shadow: 0 0 8px rgba(255,140,0,0.5);
+    }
+    input[type="range"]:active::-webkit-slider-thumb { background: var(--accent); }
+    input[type="range"]:active::-moz-range-thumb     { background: var(--accent); }
+
+    /* ── TRANSPORT ── */
+    .progress-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .p-time { font-family: 'JetBrains Mono'; font-size: 8px; color: #555; white-space: nowrap; min-width: 28px; }
+    .p-time:last-child { text-align: right; }
+    .p-track {
+      flex: 1; height: 4px; background: #1a1a1a;
+      border-radius: 9999px; cursor: pointer; position: relative;
+    }
+    .p-track:hover { background: #222; }
+    .p-fill { height: 100%; background: var(--accent); border-radius: 9999px; width: 0%; pointer-events: none; transition: width 0.2s linear; }
+
+    .btn-row { display: flex; gap: 8px; }
+    .btn {
+      background: #1a1a1a;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; padding: 0.65rem 0;
+      font-size: 9px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      transition: all 0.2s; cursor: pointer; color: #e0e0e0;
+      flex: 1;
+    }
+    .btn:hover:not(:disabled) { background: #222; border-color: var(--accent); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-play  { color: var(--accent); }
+    .btn-stop  { color: #ff5555; }
+    .btn-export {
+      width: 100%; margin-top: 8px;
+      background: var(--accent); color: #000;
+      border-color: var(--accent); border-radius: 8px;
+      padding: 0.75rem; font-size: 9px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-export:hover:not(:disabled) { background: #ffaa33; }
+    .btn-export:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── FOOTER ROW ── */
+    .footer-bar {
+      background: #080808;
+      border-top: 1px solid var(--border);
+      padding: 0.4rem 1.5rem;
+      font-family: 'JetBrains Mono';
+      font-size: 7px;
+      color: #2a2a2a;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">AUDI<span>⊙</span>LAB &nbsp;PR<span>⊙</span></div>
+  <div class="topbar-right">
+    <div class="build-tag">Build 3.2.0 · Neural Mastering Processor</div>
+    <div class="led on"></div>
+    <div class="led" id="l-signal"></div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="grid-main">
+
+  <!-- ROW 1 -->
+
+  <!-- [1] Signal Source -->
+  <div class="card">
+    <div class="card-title">01 · Signal Source</div>
+    <div class="file-zone" onclick="document.getElementById('audioInput').click()">
+      <div class="file-name" id="fileName">Load a file</div>
+      <input type="file" id="audioInput" accept="audio/*" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;">
+    </div>
+    <div class="tech-grid">
+      <div class="tech-row"><span>Format</span><span class="tech-val" id="t-format">---</span></div>
+      <div class="tech-row"><span>Rate</span><span class="tech-val" id="t-rate">-- kHz</span></div>
+      <div class="tech-row"><span>Channels</span><span class="tech-val" id="t-channels">---</span></div>
+      <div class="tech-row"><span>Duration</span><span class="tech-val" id="t-duration">--:--</span></div>
+    </div>
+  </div>
+
+  <!-- [2] Analysis -->
+  <div class="card span-2">
+    <div class="card-title">02 · Analysis</div>
+    <canvas id="specCanvas"></canvas>
+    <canvas id="scopeCanvas"></canvas>
+  </div>
+
+  <!-- [3] Meters -->
+  <div class="card">
+    <div class="card-title">03 · Meters</div>
+    <div class="meter">
+      <div class="meter-label"><span>Peak</span><span id="v-peak">-∞ dB</span></div>
+      <div class="meter-bg"><div id="m-peak" class="meter-fill" style="width:0%"></div></div>
+    </div>
+    <div class="meter">
+      <div class="meter-label"><span>RMS</span><span id="v-rms">-∞ dB</span></div>
+      <div class="meter-bg"><div id="m-rms" class="meter-fill" style="background:var(--accent-dim);width:0%"></div></div>
+    </div>
+    <div class="meter">
+      <div class="meter-label"><span>Comp GR</span><span id="v-gr">0.0 dB</span></div>
+      <div class="meter-bg"><div id="m-gr" class="meter-fill" style="background:#ff4444;width:0%"></div></div>
+    </div>
+    <div class="meter">
+      <div class="meter-label"><span>Momentary LUFS</span><span id="v-lufs">-∞</span></div>
+      <div class="meter-bg"><div id="m-lufs" class="meter-fill" style="background:#00ffcc;width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- ROW 2 -->
+
+  <!-- [4] Tonality -->
+  <div class="card">
+    <div class="card-title">04 · Tonality</div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Low</span><div class="tip">i<div class="tip-box">Low shelf filter (250 Hz). Boosts or cuts bass: kick, bass, sub-bass.</div></div></div>
+        <span class="ctrl-val" id="v-low">0.0 dB</span>
+      </div>
+      <input type="range" id="p-low" min="-12" max="12" value="0" step="0.1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Mid Freq</span><div class="tip">i<div class="tip-box">Center frequency of the peaking filter (200 Hz–8 kHz).</div></div></div>
+        <span class="ctrl-val" id="v-midfreq">1.2 kHz</span>
+      </div>
+      <input type="range" id="p-midfreq" min="200" max="8000" value="1200" step="50">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Mid Gain</span><div class="tip">i<div class="tip-box">Gain of the peaking filter at Mid Freq.</div></div></div>
+        <span class="ctrl-val" id="v-mid">0.0 dB</span>
+      </div>
+      <input type="range" id="p-mid" min="-12" max="12" value="0" step="0.1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Mid Q</span><div class="tip">i<div class="tip-box">Bandwidth of the peaking filter. Low = wide, high = surgical.</div></div></div>
+        <span class="ctrl-val" id="v-midq">0.7</span>
+      </div>
+      <input type="range" id="p-midq" min="0.1" max="4" value="0.7" step="0.1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">High</span><div class="tip">i<div class="tip-box">High shelf filter (6.5 kHz). Controls air and brightness.</div></div></div>
+        <span class="ctrl-val" id="v-high">0.0 dB</span>
+      </div>
+      <input type="range" id="p-high" min="-12" max="12" value="0" step="0.1">
+    </div>
+  </div>
+
+  <!-- [5] Dynamics -->
+  <div class="card">
+    <div class="card-title">05 · Dynamics</div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Warmth</span><div class="tip">i<div class="tip-box">Soft harmonic saturation (tanh). Simulates analog transformer warmth.</div></div></div>
+        <span class="ctrl-val" id="v-warmth">0%</span>
+      </div>
+      <input type="range" id="p-warmth" min="0" max="80" value="0">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Comp Threshold</span><div class="tip">i<div class="tip-box">Level at which the compressor activates.</div></div></div>
+        <span class="ctrl-val" id="v-thresh">-24 dB</span>
+      </div>
+      <input type="range" id="p-thresh" min="-60" max="0" value="-24" step="1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Comp Ratio</span><div class="tip">i<div class="tip-box">Compression ratio. Higher = more aggressive.</div></div></div>
+        <span class="ctrl-val" id="v-ratio">4.0:1</span>
+      </div>
+      <input type="range" id="p-ratio" min="1" max="20" value="4" step="0.1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Limiter</span><div class="tip">i<div class="tip-box">Brickwall ceiling (ratio 20:1). Prevents clipping. Recommended: -1 dBFS.</div></div></div>
+        <span class="ctrl-val" id="v-limit">-6 dB</span>
+      </div>
+      <input type="range" id="p-limit" min="-12" max="0" value="-6" step="0.1">
+    </div>
+  </div>
+
+  <!-- [6] Space -->
+  <div class="card">
+    <div class="card-title">06 · Space</div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Width (M/S)</span><div class="tip">i<div class="tip-box">Mid/Side matrix. 100% = neutral. Above widens stereo, below narrows to mono.</div></div></div>
+        <span class="ctrl-val" id="v-width">100%</span>
+      </div>
+      <input type="range" id="p-width" min="50" max="200" value="100" step="1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Reverb Mix</span><div class="tip">i<div class="tip-box">Amount of reverb added. Adds space and acoustic depth.</div></div></div>
+        <span class="ctrl-val" id="v-reverb">15%</span>
+      </div>
+      <input type="range" id="p-reverb" min="0" max="50" value="15" step="1">
+    </div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Reverb Decay</span><div class="tip">i<div class="tip-box">Length of the reverb tail. Short = small room, long = cathedral.</div></div></div>
+        <span class="ctrl-val" id="v-decay">1.8s</span>
+      </div>
+      <input type="range" id="p-decay" min="0.5" max="4" value="1.8" step="0.1">
+    </div>
+  </div>
+
+  <!-- [7] Final + Transport -->
+  <div class="card">
+    <div class="card-title">07 · Final & Transport</div>
+    <div class="ctrl">
+      <div class="ctrl-header">
+        <div class="ctrl-left"><span class="ctrl-name">Master Gain</span><div class="tip">i<div class="tip-box">Final output volume. e.g. -14 LUFS for Spotify, -16 for Apple Music.</div></div></div>
+        <span class="ctrl-val" id="v-gain">0.0 dB</span>
+      </div>
+      <input type="range" id="p-gain" min="-30" max="6" value="0" step="0.1">
+    </div>
+
+    <div class="progress-wrap" style="margin-top:10px">
+      <span class="p-time" id="t-current">0:00</span>
+      <div class="p-track" id="progressBar"><div class="p-fill" id="progressFill"></div></div>
+      <span class="p-time" id="t-total">0:00</span>
+    </div>
+
+    <div class="btn-row">
+      <button id="playBtn" disabled class="btn btn-play">Play</button>
+      <button id="stopBtn" disabled class="btn btn-stop">Stop</button>
+      <button id="abBtn" class="btn" style="flex:0.6;font-size:8px">A/B</button>
+    </div>
+
+    <button id="exportBtn" disabled class="btn-export">Export Remaster (.WAV)</button>
+  </div>
+
+</div>
+
+<div class="footer-bar">Neural Mastering Processor · Build 3.2.0 · Web Audio API</div>
+
+<script>
+let audioCtx=null,audioBuffer=null,sourceNode=null;
+let isPlaying=false,playbackOffset=0,startTime=0,isDry=false,animFrameId=null;
+let nodes={};
+
+const specC=document.getElementById('specCanvas');
+const scopeC=document.getElementById('scopeCanvas');
+
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  [specC,scopeC].forEach(c=>{c.width=c.offsetWidth*dpr;c.height=c.offsetHeight*dpr;});
+}
+window.addEventListener('resize',resize);
+
+function fmtTime(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+function updateProgress(){
+  if(!audioBuffer||!isPlaying)return;
+  const el=(audioCtx.currentTime-startTime)+playbackOffset;
+  const pct=Math.min(100,(el/audioBuffer.duration)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('t-current').textContent=fmtTime(el);
+}
+
+document.getElementById('progressBar').addEventListener('click',function(e){
+  if(!audioBuffer)return;
+  const r=this.getBoundingClientRect();
+  const seekTo=((e.clientX-r.left)/r.width)*audioBuffer.duration;
+  if(isPlaying){
+    if(sourceNode){sourceNode.onended=null;try{sourceNode.stop();}catch(_){}}
+    playbackOffset=seekTo;startTime=audioCtx.currentTime;
+    sourceNode=audioCtx.createBufferSource();sourceNode.buffer=audioBuffer;
+    sourceNode.connect(nodes.input);sourceNode.start(0,Math.max(0,seekTo));sourceNode.onended=onEnded;
+  }else{
+    playbackOffset=seekTo;
+    document.getElementById('progressFill').style.width=Math.min(100,(seekTo/audioBuffer.duration)*100)+'%';
+    document.getElementById('t-current').textContent=fmtTime(seekTo);
+  }
+});
+
+function initAudio(){
+  if(audioCtx)return;
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();
+  nodes.input=audioCtx.createGain();nodes.dry=audioCtx.createGain();nodes.wet=audioCtx.createGain();
+  nodes.low=audioCtx.createBiquadFilter();nodes.low.type='lowshelf';nodes.low.frequency.value=250;
+  nodes.mid=audioCtx.createBiquadFilter();nodes.mid.type='peaking';nodes.mid.frequency.value=1200;nodes.mid.Q.value=0.7;
+  nodes.high=audioCtx.createBiquadFilter();nodes.high.type='highshelf';nodes.high.frequency.value=6500;
+  nodes.shaper=audioCtx.createWaveShaper();nodes.shaperGain=audioCtx.createGain();
+  nodes.comp=audioCtx.createDynamicsCompressor();nodes.comp.attack.value=0.01;nodes.comp.release.value=0.1;nodes.comp.knee.value=6;
+  nodes.limiter=audioCtx.createDynamicsCompressor();nodes.limiter.ratio.value=20;nodes.limiter.attack.value=0.003;nodes.limiter.release.value=0.05;nodes.limiter.knee.value=0;
+  const k=1/Math.sqrt(2);
+  nodes.splitter=audioCtx.createChannelSplitter(2);nodes.merger=audioCtx.createChannelMerger(2);
+  nodes.lToMid=audioCtx.createGain();nodes.lToMid.gain.value=k;
+  nodes.rToMid=audioCtx.createGain();nodes.rToMid.gain.value=k;
+  nodes.lToSide=audioCtx.createGain();nodes.lToSide.gain.value=k;
+  nodes.rToSide=audioCtx.createGain();nodes.rToSide.gain.value=-k;
+  nodes.midGain=audioCtx.createGain();nodes.midGain.gain.value=1;
+  nodes.sideGain=audioCtx.createGain();nodes.sideGain.gain.value=1;
+  nodes.midToL=audioCtx.createGain();nodes.midToL.gain.value=1;
+  nodes.midToR=audioCtx.createGain();nodes.midToR.gain.value=1;
+  nodes.sideToL=audioCtx.createGain();nodes.sideToL.gain.value=1;
+  nodes.sideToR=audioCtx.createGain();nodes.sideToR.gain.value=-1;
+  nodes.reverb=audioCtx.createConvolver();nodes.reverbGain=audioCtx.createGain();nodes.reverbDry=audioCtx.createGain();
+  nodes.master=audioCtx.createGain();nodes.analyser=audioCtx.createAnalyser();nodes.analyser.fftSize=1024;
+  nodes.lufsGain=audioCtx.createGain();nodes.lufsSplitter=audioCtx.createChannelSplitter(2);
+  nodes.kL1=audioCtx.createBiquadFilter();nodes.kL1.type='highshelf';nodes.kL1.frequency.value=3700;nodes.kL1.gain.value=3.5;nodes.kL1.Q.value=0.5;
+  nodes.kL2=audioCtx.createBiquadFilter();nodes.kL2.type='highpass';nodes.kL2.frequency.value=50;nodes.kL2.Q.value=0.7;
+  nodes.kR1=audioCtx.createBiquadFilter();nodes.kR1.type='highshelf';nodes.kR1.frequency.value=3700;nodes.kR1.gain.value=3.5;nodes.kR1.Q.value=0.5;
+  nodes.kR2=audioCtx.createBiquadFilter();nodes.kR2.type='highpass';nodes.kR2.frequency.value=50;nodes.kR2.Q.value=0.7;
+  nodes.lufsAnalyserL=audioCtx.createAnalyser();nodes.lufsAnalyserL.fftSize=256;
+  nodes.lufsAnalyserR=audioCtx.createAnalyser();nodes.lufsAnalyserR.fftSize=256;
+
+  nodes.input.connect(nodes.dry);nodes.input.connect(nodes.shaper);nodes.shaper.connect(nodes.shaperGain);
+  nodes.shaperGain.connect(nodes.low);nodes.low.connect(nodes.mid);nodes.mid.connect(nodes.high);
+  nodes.high.connect(nodes.comp);nodes.comp.connect(nodes.limiter);nodes.limiter.connect(nodes.splitter);
+  nodes.splitter.connect(nodes.lToMid,0);nodes.splitter.connect(nodes.rToMid,1);
+  nodes.splitter.connect(nodes.lToSide,0);nodes.splitter.connect(nodes.rToSide,1);
+  nodes.lToMid.connect(nodes.midGain);nodes.rToMid.connect(nodes.midGain);
+  nodes.lToSide.connect(nodes.sideGain);nodes.rToSide.connect(nodes.sideGain);
+  nodes.midGain.connect(nodes.midToL);nodes.midGain.connect(nodes.midToR);
+  nodes.sideGain.connect(nodes.sideToL);nodes.sideGain.connect(nodes.sideToR);
+  nodes.midToL.connect(nodes.merger,0,0);nodes.midToR.connect(nodes.merger,0,1);
+  nodes.sideToL.connect(nodes.merger,0,0);nodes.sideToR.connect(nodes.merger,0,1);
+  nodes.merger.connect(nodes.reverbDry);nodes.merger.connect(nodes.reverb);nodes.reverb.connect(nodes.reverbGain);
+  nodes.reverbGain.connect(nodes.wet);nodes.reverbDry.connect(nodes.wet);
+  nodes.dry.connect(nodes.master);nodes.wet.connect(nodes.master);
+  nodes.master.connect(nodes.analyser);nodes.analyser.connect(audioCtx.destination);
+  nodes.master.connect(nodes.lufsGain);nodes.lufsGain.connect(nodes.lufsSplitter);
+  nodes.lufsSplitter.connect(nodes.kL1,0);nodes.kL1.connect(nodes.kL2);nodes.kL2.connect(nodes.lufsAnalyserL);
+  nodes.lufsSplitter.connect(nodes.kR1,1);nodes.kR1.connect(nodes.kR2);nodes.kR2.connect(nodes.lufsAnalyserR);
+  updateReverbImpulse();updateAll();
+}
+
+function updateReverbImpulse(){
+  if(!audioCtx)return;
+  const decay=parseFloat(document.getElementById('p-decay').value);
+  const len=Math.ceil(audioCtx.sampleRate*decay);
+  const buf=audioCtx.createBuffer(2,len,audioCtx.sampleRate);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay*0.8);}
+  nodes.reverb.buffer=buf;
+}
+
+function makeWarmthCurve(amt){
+  const k=Math.max(0.0001,amt/30),n=256,c=new Float32Array(n),tK=Math.tanh(k);
+  for(let i=0;i<n;i++){const x=i*2/n-1;c[i]=Math.tanh(k*x)/tK;}return c;
+}
+
+function updateAll(){
+  if(!audioCtx)return;
+  const t=audioCtx.currentTime;
+  nodes.low.gain.setTargetAtTime(parseFloat(document.getElementById('p-low').value),t,0.03);
+  nodes.mid.frequency.setTargetAtTime(parseFloat(document.getElementById('p-midfreq').value),t,0.03);
+  nodes.mid.gain.setTargetAtTime(parseFloat(document.getElementById('p-mid').value),t,0.03);
+  nodes.mid.Q.setTargetAtTime(parseFloat(document.getElementById('p-midq').value),t,0.03);
+  nodes.high.gain.setTargetAtTime(parseFloat(document.getElementById('p-high').value),t,0.03);
+  const w=parseFloat(document.getElementById('p-warmth').value);
+  nodes.shaper.curve=makeWarmthCurve(w);nodes.shaperGain.gain.setTargetAtTime(1+w/120,t,0.05);
+  nodes.comp.threshold.setTargetAtTime(parseFloat(document.getElementById('p-thresh').value),t,0.05);
+  nodes.comp.ratio.setTargetAtTime(parseFloat(document.getElementById('p-ratio').value),t,0.05);
+  nodes.limiter.threshold.setTargetAtTime(parseFloat(document.getElementById('p-limit').value),t,0.05);
+  nodes.sideGain.gain.setTargetAtTime(parseFloat(document.getElementById('p-width').value)/100,t,0.05);
+  const mix=parseFloat(document.getElementById('p-reverb').value)/100;
+  nodes.reverbGain.gain.setTargetAtTime(mix,t,0.05);nodes.reverbDry.gain.setTargetAtTime(1-mix,t,0.05);
+  nodes.master.gain.setTargetAtTime(Math.pow(10,parseFloat(document.getElementById('p-gain').value)/20),t,0.03);
+  updateMix();
+}
+
+function updateMix(){
+  if(!audioCtx)return;
+  const t=audioCtx.currentTime;
+  nodes.dry.gain.setTargetAtTime(isDry?1:0,t,0.05);
+  nodes.wet.gain.setTargetAtTime(isDry?0:1,t,0.05);
+}
+
+const sliders=[
+  {id:'p-low',dsp:'v-low',fmt:v=>v.toFixed(1)+' dB'},
+  {id:'p-midfreq',dsp:'v-midfreq',fmt:v=>v>=1000?(v/1000).toFixed(1)+' kHz':Math.round(v)+' Hz'},
+  {id:'p-mid',dsp:'v-mid',fmt:v=>v.toFixed(1)+' dB'},
+  {id:'p-midq',dsp:'v-midq',fmt:v=>v.toFixed(1)},
+  {id:'p-high',dsp:'v-high',fmt:v=>v.toFixed(1)+' dB'},
+  {id:'p-warmth',dsp:'v-warmth',fmt:v=>Math.round(v)+'%'},
+  {id:'p-thresh',dsp:'v-thresh',fmt:v=>Math.round(v)+' dB'},
+  {id:'p-ratio',dsp:'v-ratio',fmt:v=>v.toFixed(1)+':1'},
+  {id:'p-limit',dsp:'v-limit',fmt:v=>v.toFixed(1)+' dB'},
+  {id:'p-width',dsp:'v-width',fmt:v=>Math.round(v)+'%'},
+  {id:'p-reverb',dsp:'v-reverb',fmt:v=>Math.round(v)+'%'},
+  {id:'p-decay',dsp:'v-decay',fmt:v=>v.toFixed(1)+'s'},
+  {id:'p-gain',dsp:'v-gain',fmt:v=>v.toFixed(1)+' dB'},
+];
+sliders.forEach(({id,dsp,fmt})=>{
+  const el=document.getElementById(id),out=document.getElementById(dsp);
+  out.textContent=fmt(parseFloat(el.value));
+  el.addEventListener('input',()=>{
+    out.textContent=fmt(parseFloat(el.value));
+    if(id==='p-decay')updateReverbImpulse();
+    if(audioCtx)updateAll();
+  });
+});
+
+document.getElementById('audioInput').addEventListener('change',async function(e){
+  const file=e.target.files[0];if(!file)return;
+  if(sourceNode){sourceNode.onended=null;try{sourceNode.stop();}catch(_){}sourceNode=null;}
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  isPlaying=false;playbackOffset=0;
+  document.getElementById('playBtn').textContent='Play';
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('t-current').textContent='0:00';
+  document.getElementById('fileName').textContent=file.name.toUpperCase().slice(0,26);
+  initAudio();
+  if(audioCtx.state==='suspended')await audioCtx.resume();
+  const ab=await file.arrayBuffer();
+  audioCtx.decodeAudioData(ab,buf=>{
+    audioBuffer=buf;
+    document.getElementById('t-format').textContent=file.name.split('.').pop().toUpperCase();
+    document.getElementById('t-rate').textContent=(buf.sampleRate/1000).toFixed(1)+' kHz';
+    document.getElementById('t-channels').textContent=buf.numberOfChannels===2?'STEREO':'MONO';
+    document.getElementById('t-duration').textContent=fmtTime(buf.duration);
+    document.getElementById('t-total').textContent=fmtTime(buf.duration);
+    document.getElementById('playBtn').disabled=false;
+    document.getElementById('stopBtn').disabled=false;
+    document.getElementById('exportBtn').disabled=false;
+    document.getElementById('l-signal').classList.add('on');
+  },err=>alert('Decoding error: '+err.message));
+});
+
+function onEnded(){
+  isPlaying=false;playbackOffset=0;
+  document.getElementById('playBtn').textContent='Play';
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('t-current').textContent='0:00';
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+}
+
+document.getElementById('playBtn').addEventListener('click',()=>{
+  if(!audioBuffer)return;
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  if(isPlaying){
+    try{sourceNode.stop();}catch(_){}
+    playbackOffset+=audioCtx.currentTime-startTime;isPlaying=false;
+    document.getElementById('playBtn').textContent='Play';
+    if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  }else{
+    sourceNode=audioCtx.createBufferSource();sourceNode.buffer=audioBuffer;
+    sourceNode.connect(nodes.input);startTime=audioCtx.currentTime;
+    sourceNode.start(0,Math.max(0,playbackOffset%audioBuffer.duration));
+    sourceNode.onended=onEnded;isPlaying=true;
+    document.getElementById('playBtn').textContent='Pause';drawLoop();
+  }
+});
+
+document.getElementById('stopBtn').addEventListener('click',()=>{
+  if(sourceNode){sourceNode.onended=null;try{sourceNode.stop();}catch(_){}sourceNode=null;}
+  isPlaying=false;playbackOffset=0;
+  document.getElementById('playBtn').textContent='Play';
+  document.getElementById('progressFill').style.width='0%';
+  document.getElementById('t-current').textContent='0:00';
+  if(animFrameId){cancelAnimationFrame(animFrameId);animFrameId=null;}
+  ['m-peak','m-rms','m-gr','m-lufs'].forEach(id=>document.getElementById(id).style.width='0%');
+  ['v-peak','v-rms'].forEach(id=>document.getElementById(id).textContent='-∞ dB');
+  document.getElementById('v-gr').textContent='0.0 dB';
+  document.getElementById('v-lufs').textContent='-∞';
+});
+
+document.getElementById('abBtn').addEventListener('click',()=>{
+  isDry=!isDry;
+  document.getElementById('abBtn').textContent=isDry?'B·DRY':'A·WET';
+  if(audioCtx)updateMix();
+});
+
+document.getElementById('exportBtn').addEventListener('click',async()=>{
+  if(!audioBuffer)return;
+  const btn=document.getElementById('exportBtn');
+  btn.textContent='Rendering…';btn.disabled=true;
+  const off=new OfflineAudioContext(2,audioBuffer.length,audioBuffer.sampleRate);
+  const src=off.createBufferSource();src.buffer=audioBuffer;
+  const oLow=off.createBiquadFilter();oLow.type='lowshelf';oLow.frequency.value=250;oLow.gain.value=nodes.low.gain.value;
+  const oMid=off.createBiquadFilter();oMid.type='peaking';oMid.frequency.value=nodes.mid.frequency.value;oMid.gain.value=nodes.mid.gain.value;oMid.Q.value=nodes.mid.Q.value;
+  const oHigh=off.createBiquadFilter();oHigh.type='highshelf';oHigh.frequency.value=6500;oHigh.gain.value=nodes.high.gain.value;
+  const oShaper=off.createWaveShaper();oShaper.curve=nodes.shaper.curve;
+  const oShaperG=off.createGain();oShaperG.gain.value=nodes.shaperGain.gain.value||1;
+  const oComp=off.createDynamicsCompressor();oComp.threshold.value=nodes.comp.threshold.value;oComp.ratio.value=nodes.comp.ratio.value;oComp.attack.value=0.01;oComp.release.value=0.1;
+  const oLim=off.createDynamicsCompressor();oLim.threshold.value=nodes.limiter.threshold.value;oLim.ratio.value=20;oLim.attack.value=0.003;oLim.release.value=0.05;
+  const k=1/Math.sqrt(2);
+  const oSplit=off.createChannelSplitter(2),oMerge=off.createChannelMerger(2);
+  const oLM=off.createGain();oLM.gain.value=k;const oRM=off.createGain();oRM.gain.value=k;
+  const oLS=off.createGain();oLS.gain.value=k;const oRS=off.createGain();oRS.gain.value=-k;
+  const oMG=off.createGain();oMG.gain.value=1;const oSG=off.createGain();oSG.gain.value=nodes.sideGain.gain.value||1;
+  const oML=off.createGain();oML.gain.value=1;const oMR=off.createGain();oMR.gain.value=1;
+  const oSL=off.createGain();oSL.gain.value=1;const oSR=off.createGain();oSR.gain.value=-1;
+  const oRev=off.createConvolver();oRev.buffer=nodes.reverb.buffer;
+  const oRevG=off.createGain();oRevG.gain.value=nodes.reverbGain.gain.value;
+  const oRevD=off.createGain();oRevD.gain.value=nodes.reverbDry.gain.value;
+  const oMas=off.createGain();oMas.gain.value=nodes.master.gain.value;
+  src.connect(oShaper);oShaper.connect(oShaperG);oShaperG.connect(oLow);oLow.connect(oMid);oMid.connect(oHigh);
+  oHigh.connect(oComp);oComp.connect(oLim);oLim.connect(oSplit);
+  oSplit.connect(oLM,0);oSplit.connect(oRM,1);oSplit.connect(oLS,0);oSplit.connect(oRS,1);
+  oLM.connect(oMG);oRM.connect(oMG);oLS.connect(oSG);oRS.connect(oSG);
+  oMG.connect(oML);oMG.connect(oMR);oSG.connect(oSL);oSG.connect(oSR);
+  oML.connect(oMerge,0,0);oMR.connect(oMerge,0,1);oSL.connect(oMerge,0,0);oSR.connect(oMerge,0,1);
+  oMerge.connect(oRevD);oMerge.connect(oRev);oRev.connect(oRevG);oRevG.connect(oMas);oRevD.connect(oMas);oMas.connect(off.destination);
+  src.start();
+  const rendered=await off.startRendering();
+  const wavBuf=bufferToWave(rendered,rendered.length);
+  const blob=new Blob([wavBuf],{type:'audio/wav'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='AUDIOLAB_v320_REMASTER.wav';a.click();
+  btn.textContent='Export Remaster (.WAV)';btn.disabled=false;
+});
+
+function bufferToWave(buffer,len){
+  const nCh=buffer.numberOfChannels,tot=len*nCh*2+44,ab=new ArrayBuffer(tot),view=new DataView(ab);
+  let p=0;
+  const w16=d=>{view.setUint16(p,d,true);p+=2;};
+  const w32=d=>{view.setUint32(p,d,true);p+=4;};
+  w32(0x46464952);w32(tot-8);w32(0x45564157);w32(0x20746d66);w32(16);w16(1);w16(nCh);
+  w32(buffer.sampleRate);w32(buffer.sampleRate*nCh*2);w16(nCh*2);w16(16);
+  w32(0x61746164);w32(tot-p-4);
+  for(let i=0;i<len;i++)for(let c=0;c<nCh;c++){const s=Math.max(-1,Math.min(1,buffer.getChannelData(c)[i]));view.setInt16(p,s<0?s*32768:s*32767,true);p+=2;}
+  return ab;
+}
+
+function drawLoop(){
+  if(!isPlaying)return;
+  animFrameId=requestAnimationFrame(drawLoop);
+  updateProgress();
+  const W=specC.width,H=specC.height,sCtx=specC.getContext('2d');
+  const freq=new Uint8Array(nodes.analyser.frequencyBinCount);
+  nodes.analyser.getByteFrequencyData(freq);
+  sCtx.clearRect(0,0,W,H);
+  const bw=W/freq.length;
+  for(let i=0;i<freq.length;i++){
+    const n=freq[i]/255,r=Math.round(80+175*n),g=Math.round(80*(1-n));
+    sCtx.fillStyle=`rgb(${r},${g},0)`;sCtx.fillRect(i*bw,H-n*H,Math.max(1,bw-1),n*H);
+  }
+  const scCtx=scopeC.getContext('2d'),SW=scopeC.width,SH=scopeC.height;
+  scCtx.fillStyle='rgba(0,0,0,0.25)';scCtx.fillRect(0,0,SW,SH);
+  scCtx.strokeStyle='rgba(255,255,255,0.04)';scCtx.lineWidth=1;
+  scCtx.beginPath();scCtx.moveTo(SW/2,0);scCtx.lineTo(SW/2,SH);scCtx.stroke();
+  scCtx.beginPath();scCtx.moveTo(0,SH/2);scCtx.lineTo(SW,SH/2);scCtx.stroke();
+  const time=new Float32Array(nodes.analyser.fftSize);
+  nodes.analyser.getFloatTimeDomainData(time);
+  scCtx.strokeStyle='rgba(255,140,0,0.8)';scCtx.lineWidth=1.5;scCtx.beginPath();
+  const cx=SW/2,cy=SH/2,half=Math.floor(time.length/2);
+  for(let i=0;i<half;i++){
+    const L=time[i*2]||0,R=time[i*2+1]||L;
+    const x=cx+((L+R)/Math.sqrt(2))*cx*0.9,y=cy-((L-R)/Math.sqrt(2))*cy*0.9;
+    i===0?scCtx.moveTo(x,y):scCtx.lineTo(x,y);
+  }
+  scCtx.stroke();
+  const td8=new Uint8Array(nodes.analyser.fftSize);nodes.analyser.getByteTimeDomainData(td8);
+  let peak=0,sumSq=0;
+  for(const v of td8){const n=Math.abs((v-128)/128);if(n>peak)peak=n;sumSq+=n*n;}
+  const rms=Math.sqrt(sumSq/td8.length),peakDB=peak>0?20*Math.log10(peak):-96,rmsDB=rms>0?20*Math.log10(rms):-96;
+  document.getElementById('v-peak').textContent=peakDB.toFixed(1)+' dB';
+  document.getElementById('v-rms').textContent=rmsDB.toFixed(1)+' dB';
+  document.getElementById('m-peak').style.width=Math.min(100,(peakDB+60)/60*100)+'%';
+  document.getElementById('m-rms').style.width=Math.min(100,(rmsDB+60)/60*100)+'%';
+  const thresh=nodes.comp.threshold.value;
+  const gr=rmsDB<thresh?0:Math.min(20,(rmsDB-thresh)*(1-1/nodes.comp.ratio.value));
+  document.getElementById('v-gr').textContent=gr.toFixed(1)+' dB';
+  document.getElementById('m-gr').style.width=Math.min(100,gr*5)+'%';
+  const lD=new Uint8Array(nodes.lufsAnalyserL.fftSize),rD=new Uint8Array(nodes.lufsAnalyserR.fftSize);
+  nodes.lufsAnalyserL.getByteTimeDomainData(lD);nodes.lufsAnalyserR.getByteTimeDomainData(rD);
+  let sL=0,sR=0;
+  for(const v of lD)sL+=((v-128)/128)**2;for(const v of rD)sR+=((v-128)/128)**2;
+  const lufsRMS=Math.sqrt((sL+sR)/(2*lD.length)),lufs=lufsRMS>0?20*Math.log10(lufsRMS)-0.691:-96;
+  document.getElementById('v-lufs').textContent=lufs.toFixed(1)+' LUFS';
+  document.getElementById('m-lufs').style.width=Math.min(100,Math.max(0,(lufs+60)/60*100))+'%';
+}
+
+window.addEventListener('load',()=>{resize();});
+</script>
+</body>
+</html>
