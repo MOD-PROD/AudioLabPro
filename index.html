@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>ΔUDI⊙ LΔB PR⊙ | Mastering Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #ff8c00;
+      --accent-dim: #945200;
+      --bg-deep: #0a0a0a;
+      --panel-bg: #111111;
+      --border-color: rgba(255,255,255,0.05);
+    }
+    body {
+      background-color: var(--bg-deep);
+      color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      margin: 0;
+      padding-bottom: 40px;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .app-container { max-width: 480px; margin: 0 auto; padding: 1.5rem; }
+
+    .rack-panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .label-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-display {
+      background: #0d0d0d;
+      border-radius: 12px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.03);
+      transition: all 0.2s;
+    }
+    .file-display:hover { border-color: var(--accent); }
+    .file-name-text {
+      color: var(--accent);
+      font-family: 'JetBrains Mono';
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .tech-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono';
+      font-size: 9px;
+      text-transform: uppercase;
+      color: #444;
+      margin-top: 0.4rem;
+    }
+    .tech-value { color: #888; }
+
+    canvas {
+      background: #000;
+      border-radius: 8px;
+      width: 100%;
+      height: 90px;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+    .progress-time {
+      font-family: 'JetBrains Mono';
+      font-size: 9px;
+      color: #555;
+      white-space: nowrap;
+      min-width: 32px;
+    }
+    .progress-time:last-child { text-align: right; }
+    .progress-track {
+      flex: 1;
+      height: 5px;
+      background: #1a1a1a;
+      border-radius: 9999px;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-track:hover { background: #242424; }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 9999px;
+      width: 0%;
+      pointer-events: none;
+      transition: width 0.2s linear;
+    }
+
+    /* ── Meters ── */
+    .meter-container { margin-top: 0.75rem; }
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono';
+      font-size: 9px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .meter-bar-bg { background: #000; height: 6px; border-radius: 3px; overflow: hidden; }
+    .meter-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #444, var(--accent));
+      transition: width 0.05s ease-out;
+    }
+
+    /* ── Controls ── */
+    .control-group { margin-bottom: 1.25rem; }
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .control-left { display: flex; align-items: center; gap: 6px; }
+    .control-title { font-size: 9px; font-family: 'JetBrains Mono'; color: #888; text-transform: uppercase; }
+    .control-value { font-size: 10px; font-family: 'JetBrains Mono'; color: var(--accent); }
+
+    /* ── Tooltip ── */
+    .tip {
+      position: relative;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: #1c1c1c;
+      border: 1px solid #333;
+      color: #555;
+      font-size: 8px;
+      font-family: 'JetBrains Mono';
+      cursor: default;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .tip:hover { border-color: var(--accent); color: var(--accent); }
+    .tip-box {
+      display: none;
+      position: absolute;
+      left: 0; top: calc(100% + 8px);
+      z-index: 200;
+      width: 230px;
+      background: #181818;
+      border: 1px solid rgba(255,140,0,0.25);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-family: 'JetBrains Mono';
+      font-size: 8px;
+      color: #999;
+      line-height: 1.55;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      pointer-events: none;
+    }
+    .tip:hover .tip-box { display: block; }
+
+    /* ── Sliders ── */
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 28px;
+      background: transparent; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track { height:5px; background:#1f1f1f; border-radius:9999px; }
+    input[type="range"]::-moz-range-track               { height:5px; background:#1f1f1f; border-radius:9999px; }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance:none; height:20px; width:20px;
+      background:#222; border:3px solid var(--accent); border-radius:9999px;
+      margin-top:-8px; box-shadow:0 0 12px rgba(255,140,0,0.6);
+    }
+    input[type="range"]::-moz-range-thumb {
+      appearance:none; height:20px; width:20px;
+      background:#222; border:3px solid var(--accent); border-radius:9999px;
+      box-shadow:0 0 12px rgba(255,140,0,0.6);
+    }
+    input[type="range"]:active::-webkit-slider-thumb { background:var(--accent); border-color:#fff; }
+    input[type="range"]:active::-moz-range-thumb     { background:var(--accent); border-color:#fff; }
+
+    /* ── Logo style prototype ── */
+    .logo-wrap { display:block; text-align:center; line-height:1; }
+    .logo-line1, .logo-line2 {
+      display: block;
+      font-family: 'Inter', sans-serif;
+      font-weight: 900;
+      font-style: italic;
+      font-size: 48px;
+      color: #ffffff;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      line-height: 1.05;
+    }
+    .logo-dot {
+      color: var(--accent);
+      font-style: normal;
+      filter: drop-shadow(0 0 8px rgba(255,140,0,0.6));
+    }
+
+    .led { width:6px; height:6px; border-radius:50%; background:#222; }
+    .led.on { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+
+    .module-title {
+      color: var(--accent);
+      font-size: 11px; font-family:'JetBrains Mono'; font-weight:700;
+      text-transform:uppercase;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      padding-bottom:8px; margin-bottom:16px;
+    }
+    .btn-main {
+      background:#1a1a1a;
+      border:1px solid rgba(255,255,255,0.08);
+      padding:1rem; border-radius:12px;
+      font-size:10px; font-weight:800;
+      text-transform:uppercase; letter-spacing:0.1em;
+      transition:all 0.2s; width:100%;
+      cursor:pointer; color:#e0e0e0;
+    }
+    .btn-main:hover:not(:disabled) { background:#252525; border-color:var(--accent); }
+    .btn-main:disabled { opacity:0.35; cursor:not-allowed; }
+    .ab-btn { font-size:9px; padding:0.5rem 1rem; border-radius:9999px; }
+  </style>
+</head>
+<body>
+<div class="app-container">
+
+  <header class="text-center mb-8 select-none">
+    <div class="logo-wrap">
+      <div class="logo-line1">AUDI<span class="logo-dot">⊙</span>LAB</div>
+      <div class="logo-line2">PR<span class="logo-dot">⊙</span></div>
+    </div>
+    <p class="text-[9px] uppercase tracking-[0.4em] text-gray-600 font-bold mt-3">Professional Mastering Suite</p>
+    <p class="mono text-[7px] mt-1 opacity-40" style="color:var(--accent-dim)">BUILD_3.2.0_PROD</p>
+  </header>
+
+  <!-- Signal Source -->
+  <div class="rack-panel">
+    <div class="label-header">
+      <span>Signal Source</span>
+      <div class="flex gap-2">
+        <div class="led on" id="l-power"></div>
+        <div class="led" id="l-signal"></div>
+      </div>
+    </div>
+    <div onclick="document.getElementById('audioInput').click()" class="file-display cursor-pointer">
+      <span id="fileName" class="file-name-text">Charger un fichier</span>
+      <input type="file" id="audioInput" accept="audio/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" />
+    </div>
+    <div class="mt-4 space-y-1">
+      <div class="tech-row"><span>Format</span><span class="tech-value" id="t-format">---</span></div>
+      <div class="tech-row"><span>Sample Rate</span><span class="tech-value" id="t-rate">-- kHz</span></div>
+      <div class="tech-row"><span>Channels</span><span class="tech-value" id="t-channels">---</span></div>
+      <div class="tech-row"><span>Duration</span><span class="tech-value" id="t-duration">--:--</span></div>
+    </div>
+  </div>
+
+  <!-- Analysis -->
+  <div class="rack-panel">
+    <div class="label-header"><span>FFT Spectrum</span></div>
+    <canvas id="specCanvas"></canvas>
+    <div class="label-header mt-2"><span>Vector Scope</span></div>
+    <canvas id="scopeCanvas"></canvas>
+
+    <div class="meter-container">
+      <div class="meter-label"><span>Peak</span><span id="v-peak">-∞ dB</span></div>
+      <div class="meter-bar-bg"><div id="m-peak" class="meter-fill" style="width:0%"></div></div>
+    </div>
+    <div class="meter-container">
+      <div class="meter-label"><span>RMS</span><span id="v-rms">-∞ dB</span></div>
+      <div class="meter-bar-bg"><div id="m-rms" class="meter-fill" style="background:var(--accent-dim);width:0%"></div></div>
+    </div>
+    <div class="meter-container">
+      <div class="meter-label"><span>Comp GR</span><span id="v-gr">0.0 dB</span></div>
+      <div class="meter-bar-bg"><div id="m-gr" class="meter-fill" style="background:#ff4444;width:0%"></div></div>
+    </div>
+    <div class="meter-container">
+      <div class="meter-label"><span>Momentary LUFS</span><span id="v-lufs">-∞ LUFS</span></div>
+      <div class="meter-bar-bg"><div id="m-lufs" class="meter-fill" style="background:#00ffcc;width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- 01. Tonality -->
+  <div class="rack-panel">
+    <div class="module-title">01. Tonality</div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Low</span>
+          <div class="tip">i<div class="tip-box">Filtre passe-bas en plateau (Lowshelf, 250 Hz). Booste ou coupe les graves : kick, basse, sub-basses.</div></div>
+        </div>
+        <span class="control-value" id="v-low">0.0 dB</span>
+      </div>
+      <input type="range" id="p-low" min="-12" max="12" value="0" step="0.1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Mid Freq</span>
+          <div class="tip">i<div class="tip-box">Fréquence centrale du filtre peaking (200 Hz–8 kHz). Déplace la zone des médiums que tu veux traiter.</div></div>
+        </div>
+        <span class="control-value" id="v-midfreq">1.2 kHz</span>
+      </div>
+      <input type="range" id="p-midfreq" min="200" max="8000" value="1200" step="50">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Mid Gain</span>
+          <div class="tip">i<div class="tip-box">Gain du filtre peaking sur la fréquence Mid Freq. Booste la présence ou coupe les résonances indésirables.</div></div>
+        </div>
+        <span class="control-value" id="v-mid">0.0 dB</span>
+      </div>
+      <input type="range" id="p-mid" min="-12" max="12" value="0" step="0.1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Mid Q</span>
+          <div class="tip">i<div class="tip-box">Largeur de bande du filtre peaking. Faible = large et douce. Élevé = étroit et chirurgical.</div></div>
+        </div>
+        <span class="control-value" id="v-midq">0.7</span>
+      </div>
+      <input type="range" id="p-midq" min="0.1" max="4" value="0.7" step="0.1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">High</span>
+          <div class="tip">i<div class="tip-box">Filtre en plateau haute fréquence (Highshelf, 6.5 kHz). Contrôle l'air, les cymbales, la brillance.</div></div>
+        </div>
+        <span class="control-value" id="v-high">0.0 dB</span>
+      </div>
+      <input type="range" id="p-high" min="-12" max="12" value="0" step="0.1">
+    </div>
+  </div>
+
+  <!-- 02. Dynamics -->
+  <div class="rack-panel">
+    <div class="module-title">02. Dynamics</div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Warmth</span>
+          <div class="tip">i<div class="tip-box">Saturation harmonique douce (tanh). Simule la chaleur des transformateurs analogiques. 0 = propre, 80 = chaud et saturé.</div></div>
+        </div>
+        <span class="control-value" id="v-warmth">0%</span>
+      </div>
+      <input type="range" id="p-warmth" min="0" max="80" value="0">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Comp Threshold</span>
+          <div class="tip">i<div class="tip-box">Niveau à partir duquel le compresseur s'active. Les sons plus forts sont atténués selon le ratio défini.</div></div>
+        </div>
+        <span class="control-value" id="v-thresh">-24 dB</span>
+      </div>
+      <input type="range" id="p-thresh" min="-60" max="0" value="-24" step="1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Comp Ratio</span>
+          <div class="tip">i<div class="tip-box">Taux de compression. 4:1 = 4 dB au-dessus du seuil → 1 dB en sortie. Plus élevé = plus agressif.</div></div>
+        </div>
+        <span class="control-value" id="v-ratio">4.0:1</span>
+      </div>
+      <input type="range" id="p-ratio" min="1" max="20" value="4" step="0.1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Limiter</span>
+          <div class="tip">i<div class="tip-box">Plafond absolu (brickwall, ratio 20:1). Prévient tout écrêtage. Recommandé : -1 dBFS pour le streaming.</div></div>
+        </div>
+        <span class="control-value" id="v-limit">-6 dB</span>
+      </div>
+      <input type="range" id="p-limit" min="-12" max="0" value="-6" step="0.1">
+    </div>
+  </div>
+
+  <!-- 03. Space -->
+  <div class="rack-panel">
+    <div class="module-title">03. Space</div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Width (Mid/Side)</span>
+          <div class="tip">i<div class="tip-box">Matrice Mid/Side. 100% = neutre. Au-dessus → élargit la stéréo. En-dessous → resserre vers le mono.</div></div>
+        </div>
+        <span class="control-value" id="v-width">100%</span>
+      </div>
+      <input type="range" id="p-width" min="50" max="200" value="100" step="1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Reverb Mix</span>
+          <div class="tip">i<div class="tip-box">Quantité de réverbe ajoutée. 0% = aucune. Ajoute de l'espace et de la profondeur acoustique au mix.</div></div>
+        </div>
+        <span class="control-value" id="v-reverb">15%</span>
+      </div>
+      <input type="range" id="p-reverb" min="0" max="50" value="15" step="1">
+    </div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Reverb Decay</span>
+          <div class="tip">i<div class="tip-box">Durée de la queue de réverbe. Court = petite pièce. Long = grande salle ou cathédrale.</div></div>
+        </div>
+        <span class="control-value" id="v-decay">1.8s</span>
+      </div>
+      <input type="range" id="p-decay" min="0.5" max="4" value="1.8" step="0.1">
+    </div>
+  </div>
+
+  <!-- 04. Final -->
+  <div class="rack-panel">
+    <div class="module-title">04. Final</div>
+
+    <div class="control-group">
+      <div class="control-header">
+        <div class="control-left">
+          <span class="control-title">Master Gain</span>
+          <div class="tip">i<div class="tip-box">Volume de sortie final. Utilisé pour atteindre la loudness cible. Ex: -14 LUFS pour Spotify, -16 pour Apple Music.</div></div>
+        </div>
+        <span class="control-value" id="v-gain">0.0 dB</span>
+      </div>
+      <input type="range" id="p-gain" min="-30" max="6" value="0" step="0.1">
+    </div>
+
+    <button id="exportBtn" disabled class="btn-main mt-4"
+      style="background:var(--accent);color:#000;border-color:var(--accent)">
+      Exporter Remaster (.WAV)
+    </button>
+  </div>
+
+  <!-- Transport -->
+  <div class="rack-panel">
+    <div class="label-header"><span>Transport</span></div>
+
+    <div class="progress-wrap">
+      <span class="progress-time" id="t-current">0:00</span>
+      <div class="progress-track" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <span class="progress-time" id="t-total">0:00</span>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3">
+      <button id="playBtn" disabled class="btn-main col-span-2" style="color:var(--accent)">Lancer</button>
+      <button id="abBtn" class="btn-main ab-btn" style="background:rgba(255,255,255,0.08)">A / B</button>
+    </div>
+    <button id="stopBtn" disabled class="btn-main mt-3" style="color:#ff5555">Arrêter</button>
+  </div>
+
+  <footer class="text-center mt-4 mb-2">
+    <p class="mono text-[7px] tracking-[0.35em] uppercase opacity-20 text-gray-500">Neural Mastering Processor V3.2.0</p>
+  </footer>
+</div>
+
+<script>
+// ── État global ────────────────────────────────────────────────────────────────
+let audioCtx       = null;
+let audioBuffer    = null;
+let sourceNode     = null;
+let isPlaying      = false;
+let playbackOffset = 0;
+let startTime      = 0;
+let isDry          = false;
+let animFrameId    = null;
+let nodes          = {};
+
+// ── Canvas ─────────────────────────────────────────────────────────────────────
+const specC  = document.getElementById('specCanvas');
+const scopeC = document.getElementById('scopeCanvas');
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  [specC, scopeC].forEach(c => {
+    c.width  = c.offsetWidth  * dpr;
+    c.height = c.offsetHeight * dpr;
+  });
+}
+window.addEventListener('resize', resize);
+
+// ── Utilitaire temps ───────────────────────────────────────────────────────────
+function fmtTime(sec) {
+  const s = Math.max(0, Math.floor(sec));
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+// ── Mise à jour barre de progression ──────────────────────────────────────────
+function updateProgress() {
+  if (!audioBuffer || !isPlaying) return;
+  const elapsed = (audioCtx.currentTime - startTime) + playbackOffset;
+  const dur     = audioBuffer.duration;
+  const pct     = Math.min(100, (elapsed / dur) * 100);
+  document.getElementById('progressFill').style.width   = pct + '%';
+  document.getElementById('t-current').textContent = fmtTime(elapsed);
+}
+
+// ── Seek (clic sur la barre) ───────────────────────────────────────────────────
+document.getElementById('progressBar').addEventListener('click', function(e) {
+  if (!audioBuffer) return;
+  const rect   = this.getBoundingClientRect();
+  const seekTo = ((e.clientX - rect.left) / rect.width) * audioBuffer.duration;
+
+  if (isPlaying) {
+    if (sourceNode) { sourceNode.onended = null; try { sourceNode.stop(); } catch(_) {} }
+    playbackOffset = seekTo;
+    startTime      = audioCtx.currentTime;
+    sourceNode     = audioCtx.createBufferSource();
+    sourceNode.buffer = audioBuffer;
+    sourceNode.connect(nodes.input);
+    sourceNode.start(0, Math.max(0, seekTo));
+    sourceNode.onended = onEnded;
+  } else {
+    playbackOffset = seekTo;
+    const pct = Math.min(100, (seekTo / audioBuffer.duration) * 100);
+    document.getElementById('progressFill').style.width  = pct + '%';
+    document.getElementById('t-current').textContent = fmtTime(seekTo);
+  }
+});
+
+// ── Init graphe Web Audio ─────────────────────────────────────────────────────
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx.resume();
+
+  nodes.input    = audioCtx.createGain();
+  nodes.dry      = audioCtx.createGain();
+  nodes.wet      = audioCtx.createGain();
+
+  nodes.low  = audioCtx.createBiquadFilter(); nodes.low.type  = 'lowshelf';  nodes.low.frequency.value  = 250;
+  nodes.mid  = audioCtx.createBiquadFilter(); nodes.mid.type  = 'peaking';   nodes.mid.frequency.value  = 1200; nodes.mid.Q.value = 0.7;
+  nodes.high = audioCtx.createBiquadFilter(); nodes.high.type = 'highshelf'; nodes.high.frequency.value = 6500;
+
+  nodes.shaper     = audioCtx.createWaveShaper();
+  nodes.shaperGain = audioCtx.createGain();
+
+  nodes.comp = audioCtx.createDynamicsCompressor();
+  nodes.comp.attack.value = 0.01; nodes.comp.release.value = 0.1; nodes.comp.knee.value = 6;
+
+  nodes.limiter = audioCtx.createDynamicsCompressor();
+  nodes.limiter.ratio.value = 20; nodes.limiter.attack.value = 0.003;
+  nodes.limiter.release.value = 0.05; nodes.limiter.knee.value = 0;
+
+  // Mid/Side
+  const k = 1 / Math.sqrt(2);
+  nodes.splitter = audioCtx.createChannelSplitter(2);
+  nodes.merger   = audioCtx.createChannelMerger(2);
+  nodes.lToMid   = audioCtx.createGain(); nodes.lToMid.gain.value  =  k;
+  nodes.rToMid   = audioCtx.createGain(); nodes.rToMid.gain.value  =  k;
+  nodes.lToSide  = audioCtx.createGain(); nodes.lToSide.gain.value =  k;
+  nodes.rToSide  = audioCtx.createGain(); nodes.rToSide.gain.value = -k;
+  nodes.midGain  = audioCtx.createGain(); nodes.midGain.gain.value = 1;
+  nodes.sideGain = audioCtx.createGain(); nodes.sideGain.gain.value = 1;
+  nodes.midToL   = audioCtx.createGain(); nodes.midToL.gain.value  =  1;
+  nodes.midToR   = audioCtx.createGain(); nodes.midToR.gain.value  =  1;
+  nodes.sideToL  = audioCtx.createGain(); nodes.sideToL.gain.value =  1;
+  nodes.sideToR  = audioCtx.createGain(); nodes.sideToR.gain.value = -1;
+
+  nodes.reverb     = audioCtx.createConvolver();
+  nodes.reverbGain = audioCtx.createGain();
+  nodes.reverbDry  = audioCtx.createGain();
+
+  nodes.master   = audioCtx.createGain();
+  nodes.analyser = audioCtx.createAnalyser(); nodes.analyser.fftSize = 1024;
+
+  // LUFS K-weighting
+  nodes.lufsGain     = audioCtx.createGain();
+  nodes.lufsSplitter = audioCtx.createChannelSplitter(2);
+  nodes.kL1 = audioCtx.createBiquadFilter(); nodes.kL1.type='highshelf'; nodes.kL1.frequency.value=3700; nodes.kL1.gain.value=3.5; nodes.kL1.Q.value=0.5;
+  nodes.kL2 = audioCtx.createBiquadFilter(); nodes.kL2.type='highpass';  nodes.kL2.frequency.value=50;   nodes.kL2.Q.value=0.7;
+  nodes.kR1 = audioCtx.createBiquadFilter(); nodes.kR1.type='highshelf'; nodes.kR1.frequency.value=3700; nodes.kR1.gain.value=3.5; nodes.kR1.Q.value=0.5;
+  nodes.kR2 = audioCtx.createBiquadFilter(); nodes.kR2.type='highpass';  nodes.kR2.frequency.value=50;   nodes.kR2.Q.value=0.7;
+  nodes.lufsAnalyserL = audioCtx.createAnalyser(); nodes.lufsAnalyserL.fftSize = 256;
+  nodes.lufsAnalyserR = audioCtx.createAnalyser(); nodes.lufsAnalyserR.fftSize = 256;
+
+  // ── Connexions ──
+  nodes.input.connect(nodes.dry);
+  nodes.input.connect(nodes.shaper);
+  nodes.shaper.connect(nodes.shaperGain);
+  nodes.shaperGain.connect(nodes.low); nodes.low.connect(nodes.mid); nodes.mid.connect(nodes.high);
+  nodes.high.connect(nodes.comp); nodes.comp.connect(nodes.limiter); nodes.limiter.connect(nodes.splitter);
+
+  nodes.splitter.connect(nodes.lToMid,  0); nodes.splitter.connect(nodes.rToMid,  1);
+  nodes.splitter.connect(nodes.lToSide, 0); nodes.splitter.connect(nodes.rToSide, 1);
+  nodes.lToMid.connect(nodes.midGain);      nodes.rToMid.connect(nodes.midGain);
+  nodes.lToSide.connect(nodes.sideGain);    nodes.rToSide.connect(nodes.sideGain);
+  nodes.midGain.connect(nodes.midToL);      nodes.midGain.connect(nodes.midToR);
+  nodes.sideGain.connect(nodes.sideToL);    nodes.sideGain.connect(nodes.sideToR);
+  nodes.midToL.connect(nodes.merger, 0, 0); nodes.midToR.connect(nodes.merger, 0, 1);
+  nodes.sideToL.connect(nodes.merger, 0, 0);nodes.sideToR.connect(nodes.merger, 0, 1);
+
+  nodes.merger.connect(nodes.reverbDry);
+  nodes.merger.connect(nodes.reverb); nodes.reverb.connect(nodes.reverbGain);
+  nodes.reverbGain.connect(nodes.wet); nodes.reverbDry.connect(nodes.wet);
+
+  nodes.dry.connect(nodes.master); nodes.wet.connect(nodes.master);
+  nodes.master.connect(nodes.analyser); nodes.analyser.connect(audioCtx.destination);
+
+  nodes.master.connect(nodes.lufsGain);
+  nodes.lufsGain.connect(nodes.lufsSplitter);
+  nodes.lufsSplitter.connect(nodes.kL1, 0); nodes.kL1.connect(nodes.kL2); nodes.kL2.connect(nodes.lufsAnalyserL);
+  nodes.lufsSplitter.connect(nodes.kR1, 1); nodes.kR1.connect(nodes.kR2); nodes.kR2.connect(nodes.lufsAnalyserR);
+
+  updateReverbImpulse();
+  updateAll();
+}
+
+// ── Reverb impulse ─────────────────────────────────────────────────────────────
+function updateReverbImpulse() {
+  if (!audioCtx) return;
+  const decay = parseFloat(document.getElementById('p-decay').value);
+  const len   = Math.ceil(audioCtx.sampleRate * decay);
+  const buf   = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay * 0.8);
+  }
+  nodes.reverb.buffer = buf;
+}
+
+// ── Warmth curve ───────────────────────────────────────────────────────────────
+function makeWarmthCurve(amount) {
+  const k  = Math.max(0.0001, amount / 30);
+  const n  = 256;
+  const c  = new Float32Array(n);
+  const tK = Math.tanh(k);
+  for (let i = 0; i < n; i++) { const x = i * 2 / n - 1; c[i] = Math.tanh(k * x) / tK; }
+  return c;
+}
+
+// ── Applique les paramètres ────────────────────────────────────────────────────
+function updateAll() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+
+  nodes.low.gain.setTargetAtTime(parseFloat(document.getElementById('p-low').value),      t, 0.03);
+  nodes.mid.frequency.setTargetAtTime(parseFloat(document.getElementById('p-midfreq').value), t, 0.03);
+  nodes.mid.gain.setTargetAtTime(parseFloat(document.getElementById('p-mid').value),      t, 0.03);
+  nodes.mid.Q.setTargetAtTime(parseFloat(document.getElementById('p-midq').value),        t, 0.03);
+  nodes.high.gain.setTargetAtTime(parseFloat(document.getElementById('p-high').value),    t, 0.03);
+
+  const warmth = parseFloat(document.getElementById('p-warmth').value);
+  nodes.shaper.curve = makeWarmthCurve(warmth);
+  nodes.shaperGain.gain.setTargetAtTime(1 + warmth / 120, t, 0.05);
+
+  nodes.comp.threshold.setTargetAtTime(parseFloat(document.getElementById('p-thresh').value), t, 0.05);
+  nodes.comp.ratio.setTargetAtTime(parseFloat(document.getElementById('p-ratio').value),      t, 0.05);
+  nodes.limiter.threshold.setTargetAtTime(parseFloat(document.getElementById('p-limit').value), t, 0.05);
+
+  const width = parseFloat(document.getElementById('p-width').value) / 100;
+  nodes.sideGain.gain.setTargetAtTime(width, t, 0.05);
+
+  const mix = parseFloat(document.getElementById('p-reverb').value) / 100;
+  nodes.reverbGain.gain.setTargetAtTime(mix,     t, 0.05);
+  nodes.reverbDry.gain.setTargetAtTime(1 - mix,  t, 0.05);
+
+  nodes.master.gain.setTargetAtTime(
+    Math.pow(10, parseFloat(document.getElementById('p-gain').value) / 20), t, 0.03);
+
+  updateMix();
+}
+
+function updateMix() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  nodes.dry.gain.setTargetAtTime(isDry ? 1 : 0, t, 0.05);
+  nodes.wet.gain.setTargetAtTime(isDry ? 0 : 1, t, 0.05);
+}
+
+// ── Sliders ────────────────────────────────────────────────────────────────────
+const sliderDefs = [
+  { id:'p-low',     dsp:'v-low',     fmt:v => v.toFixed(1) + ' dB' },
+  { id:'p-midfreq', dsp:'v-midfreq', fmt:v => v >= 1000 ? (v/1000).toFixed(1) + ' kHz' : Math.round(v) + ' Hz' },
+  { id:'p-mid',     dsp:'v-mid',     fmt:v => v.toFixed(1) + ' dB' },
+  { id:'p-midq',    dsp:'v-midq',    fmt:v => v.toFixed(1) },
+  { id:'p-high',    dsp:'v-high',    fmt:v => v.toFixed(1) + ' dB' },
+  { id:'p-warmth',  dsp:'v-warmth',  fmt:v => Math.round(v) + '%' },
+  { id:'p-thresh',  dsp:'v-thresh',  fmt:v => Math.round(v) + ' dB' },
+  { id:'p-ratio',   dsp:'v-ratio',   fmt:v => v.toFixed(1) + ':1' },
+  { id:'p-limit',   dsp:'v-limit',   fmt:v => v.toFixed(1) + ' dB' },
+  { id:'p-width',   dsp:'v-width',   fmt:v => Math.round(v) + '%' },
+  { id:'p-reverb',  dsp:'v-reverb',  fmt:v => Math.round(v) + '%' },
+  { id:'p-decay',   dsp:'v-decay',   fmt:v => v.toFixed(1) + 's' },
+  { id:'p-gain',    dsp:'v-gain',    fmt:v => v.toFixed(1) + ' dB' },
+];
+sliderDefs.forEach(({ id, dsp, fmt }) => {
+  const el  = document.getElementById(id);
+  const out = document.getElementById(dsp);
+  out.textContent = fmt(parseFloat(el.value));
+  el.addEventListener('input', () => {
+    out.textContent = fmt(parseFloat(el.value));
+    if (id === 'p-decay') updateReverbImpulse();
+    if (audioCtx) updateAll();
+  });
+});
+
+// ── Chargement fichier ─────────────────────────────────────────────────────────
+document.getElementById('audioInput').addEventListener('change', async function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (sourceNode) { sourceNode.onended = null; try { sourceNode.stop(); } catch(_) {} sourceNode = null; }
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  isPlaying = false; playbackOffset = 0;
+  document.getElementById('playBtn').textContent = 'Lancer';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('t-current').textContent = '0:00';
+
+  document.getElementById('fileName').textContent = file.name.toUpperCase().slice(0, 28);
+
+  initAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+  const ab = await file.arrayBuffer();
+  audioCtx.decodeAudioData(ab, buf => {
+    audioBuffer = buf;
+
+    document.getElementById('t-format').textContent   = file.name.split('.').pop().toUpperCase();
+    document.getElementById('t-rate').textContent     = (buf.sampleRate / 1000).toFixed(1) + ' kHz';
+    document.getElementById('t-channels').textContent = buf.numberOfChannels === 2 ? 'STEREO' : 'MONO';
+    document.getElementById('t-duration').textContent = fmtTime(buf.duration);
+    document.getElementById('t-total').textContent    = fmtTime(buf.duration);
+
+    document.getElementById('playBtn').disabled   = false;
+    document.getElementById('stopBtn').disabled   = false;
+    document.getElementById('exportBtn').disabled = false;
+    document.getElementById('l-signal').classList.add('on');
+  }, err => alert('Erreur décodage : ' + err.message));
+});
+
+// ── onEnded ────────────────────────────────────────────────────────────────────
+function onEnded() {
+  isPlaying = false; playbackOffset = 0;
+  document.getElementById('playBtn').textContent = 'Lancer';
+  document.getElementById('progressFill').style.width  = '0%';
+  document.getElementById('t-current').textContent = '0:00';
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+}
+
+// ── Play / Pause ───────────────────────────────────────────────────────────────
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (!audioBuffer) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  if (isPlaying) {
+    try { sourceNode.stop(); } catch(_) {}
+    playbackOffset += audioCtx.currentTime - startTime;
+    isPlaying = false;
+    document.getElementById('playBtn').textContent = 'Lancer';
+    if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  } else {
+    sourceNode = audioCtx.createBufferSource();
+    sourceNode.buffer = audioBuffer;
+    sourceNode.connect(nodes.input);
+    startTime = audioCtx.currentTime;
+    sourceNode.start(0, Math.max(0, playbackOffset % audioBuffer.duration));
+    sourceNode.onended = onEnded;
+    isPlaying = true;
+    document.getElementById('playBtn').textContent = 'Pause';
+    drawLoop();
+  }
+});
+
+// ── Stop ───────────────────────────────────────────────────────────────────────
+document.getElementById('stopBtn').addEventListener('click', () => {
+  if (sourceNode) { sourceNode.onended = null; try { sourceNode.stop(); } catch(_) {} sourceNode = null; }
+  isPlaying = false; playbackOffset = 0;
+  document.getElementById('playBtn').textContent = 'Lancer';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('t-current').textContent = '0:00';
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  ['m-peak','m-rms','m-gr','m-lufs'].forEach(id => document.getElementById(id).style.width = '0%');
+  ['v-peak','v-rms'].forEach(id => document.getElementById(id).textContent = '-∞ dB');
+  document.getElementById('v-gr').textContent   = '0.0 dB';
+  document.getElementById('v-lufs').textContent = '-∞ LUFS';
+});
+
+// ── A/B ────────────────────────────────────────────────────────────────────────
+document.getElementById('abBtn').addEventListener('click', () => {
+  isDry = !isDry;
+  document.getElementById('abBtn').textContent = isDry ? 'B · DRY' : 'A · WET';
+  if (audioCtx) updateMix();
+});
+
+// ── Export WAV ─────────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  if (!audioBuffer) return;
+  const btn = document.getElementById('exportBtn');
+  btn.textContent = 'Rendering…'; btn.disabled = true;
+
+  const off = new OfflineAudioContext(2, audioBuffer.length, audioBuffer.sampleRate);
+  const src = off.createBufferSource(); src.buffer = audioBuffer;
+
+  const oLow  = off.createBiquadFilter(); oLow.type='lowshelf'; oLow.frequency.value=250; oLow.gain.value=nodes.low.gain.value;
+  const oMid  = off.createBiquadFilter(); oMid.type='peaking';  oMid.frequency.value=nodes.mid.frequency.value; oMid.gain.value=nodes.mid.gain.value; oMid.Q.value=nodes.mid.Q.value;
+  const oHigh = off.createBiquadFilter(); oHigh.type='highshelf';oHigh.frequency.value=6500; oHigh.gain.value=nodes.high.gain.value;
+
+  const oShaper  = off.createWaveShaper(); oShaper.curve = nodes.shaper.curve;
+  const oShaperG = off.createGain(); oShaperG.gain.value = nodes.shaperGain.gain.value || 1;
+
+  const oComp = off.createDynamicsCompressor();
+  oComp.threshold.value = nodes.comp.threshold.value; oComp.ratio.value = nodes.comp.ratio.value;
+  oComp.attack.value = 0.01; oComp.release.value = 0.1;
+
+  const oLim = off.createDynamicsCompressor();
+  oLim.threshold.value = nodes.limiter.threshold.value; oLim.ratio.value = 20;
+  oLim.attack.value = 0.003; oLim.release.value = 0.05;
+
+  const k = 1 / Math.sqrt(2);
+  const oSplit = off.createChannelSplitter(2); const oMerge = off.createChannelMerger(2);
+  const oLM=off.createGain();oLM.gain.value=k;   const oRM=off.createGain();oRM.gain.value=k;
+  const oLS=off.createGain();oLS.gain.value=k;   const oRS=off.createGain();oRS.gain.value=-k;
+  const oMG=off.createGain();oMG.gain.value=1;   const oSG=off.createGain();oSG.gain.value=nodes.sideGain.gain.value||1;
+  const oML=off.createGain();oML.gain.value=1;   const oMR=off.createGain();oMR.gain.value=1;
+  const oSL=off.createGain();oSL.gain.value=1;   const oSR=off.createGain();oSR.gain.value=-1;
+
+  const oRev  = off.createConvolver(); oRev.buffer = nodes.reverb.buffer;
+  const oRevG = off.createGain(); oRevG.gain.value = nodes.reverbGain.gain.value;
+  const oRevD = off.createGain(); oRevD.gain.value = nodes.reverbDry.gain.value;
+  const oMas  = off.createGain(); oMas.gain.value  = nodes.master.gain.value;
+
+  src.connect(oShaper); oShaper.connect(oShaperG);
+  oShaperG.connect(oLow); oLow.connect(oMid); oMid.connect(oHigh);
+  oHigh.connect(oComp); oComp.connect(oLim); oLim.connect(oSplit);
+  oSplit.connect(oLM,0);oSplit.connect(oRM,1);oSplit.connect(oLS,0);oSplit.connect(oRS,1);
+  oLM.connect(oMG);oRM.connect(oMG);oLS.connect(oSG);oRS.connect(oSG);
+  oMG.connect(oML);oMG.connect(oMR);oSG.connect(oSL);oSG.connect(oSR);
+  oML.connect(oMerge,0,0);oMR.connect(oMerge,0,1);oSL.connect(oMerge,0,0);oSR.connect(oMerge,0,1);
+  oMerge.connect(oRevD); oMerge.connect(oRev); oRev.connect(oRevG);
+  oRevG.connect(oMas); oRevD.connect(oMas); oMas.connect(off.destination);
+
+  src.start();
+  const rendered = await off.startRendering();
+  const wavBuf   = bufferToWave(rendered, rendered.length);
+  const blob     = new Blob([wavBuf], { type: 'audio/wav' });
+  const a        = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AUDIOLAB_v320_REMASTER.wav';
+  a.click();
+
+  btn.textContent = 'Exporter Remaster (.WAV)'; btn.disabled = false;
+});
+
+// ── PCM → WAV ──────────────────────────────────────────────────────────────────
+function bufferToWave(buffer, len) {
+  const nCh  = buffer.numberOfChannels;
+  const tot  = len * nCh * 2 + 44;
+  const ab   = new ArrayBuffer(tot);
+  const view = new DataView(ab);
+  let p = 0;
+  const w16 = d => { view.setUint16(p, d, true); p += 2; };
+  const w32 = d => { view.setUint32(p, d, true); p += 4; };
+  w32(0x46464952); w32(tot - 8); w32(0x45564157);
+  w32(0x20746d66); w32(16); w16(1); w16(nCh);
+  w32(buffer.sampleRate); w32(buffer.sampleRate * nCh * 2); w16(nCh * 2); w16(16);
+  w32(0x61746164); w32(tot - p - 4);
+  for (let i = 0; i < len; i++) {
+    for (let c = 0; c < nCh; c++) {
+      const s = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i]));
+      view.setInt16(p, s < 0 ? s * 32768 : s * 32767, true); p += 2;
+    }
+  }
+  return ab;
+}
+
+// ── Boucle visuelle ────────────────────────────────────────────────────────────
+function drawLoop() {
+  if (!isPlaying) return;
+  animFrameId = requestAnimationFrame(drawLoop);
+
+  updateProgress();
+
+  // FFT Spectrum
+  const W = specC.width, H = specC.height;
+  const sCtx = specC.getContext('2d');
+  const freq  = new Uint8Array(nodes.analyser.frequencyBinCount);
+  nodes.analyser.getByteFrequencyData(freq);
+  sCtx.clearRect(0, 0, W, H);
+  const bw = W / freq.length;
+  for (let i = 0; i < freq.length; i++) {
+    const n = freq[i] / 255;
+    const r = Math.round(80 + 175 * n), g = Math.round(80 * (1 - n));
+    sCtx.fillStyle = `rgb(${r},${g},0)`;
+    sCtx.fillRect(i * bw, H - n * H, Math.max(1, bw - 1), n * H);
+  }
+
+  // Vector Scope
+  const scCtx = scopeC.getContext('2d');
+  const SW = scopeC.width, SH = scopeC.height;
+  scCtx.fillStyle = 'rgba(0,0,0,0.25)'; scCtx.fillRect(0, 0, SW, SH);
+  scCtx.strokeStyle = 'rgba(255,255,255,0.04)'; scCtx.lineWidth = 1;
+  scCtx.beginPath(); scCtx.moveTo(SW/2,0);   scCtx.lineTo(SW/2,SH);  scCtx.stroke();
+  scCtx.beginPath(); scCtx.moveTo(0,SH/2);   scCtx.lineTo(SW,SH/2);  scCtx.stroke();
+  const time = new Float32Array(nodes.analyser.fftSize);
+  nodes.analyser.getFloatTimeDomainData(time);
+  scCtx.strokeStyle = 'rgba(255,140,0,0.8)'; scCtx.lineWidth = 1.5;
+  scCtx.beginPath();
+  const cx = SW/2, cy = SH/2, half = Math.floor(time.length/2);
+  for (let i = 0; i < half; i++) {
+    const L = time[i*2]||0, R = time[i*2+1]||L;
+    const x = cx + ((L+R)/Math.sqrt(2))*cx*0.9;
+    const y = cy - ((L-R)/Math.sqrt(2))*cy*0.9;
+    i === 0 ? scCtx.moveTo(x,y) : scCtx.lineTo(x,y);
+  }
+  scCtx.stroke();
+
+  // Meters
+  const td8 = new Uint8Array(nodes.analyser.fftSize);
+  nodes.analyser.getByteTimeDomainData(td8);
+  let peak = 0, sumSq = 0;
+  for (const v of td8) { const n=Math.abs((v-128)/128); if(n>peak)peak=n; sumSq+=n*n; }
+  const rms    = Math.sqrt(sumSq / td8.length);
+  const peakDB = peak > 0 ? 20*Math.log10(peak) : -96;
+  const rmsDB  = rms  > 0 ? 20*Math.log10(rms)  : -96;
+  document.getElementById('v-peak').textContent = peakDB.toFixed(1)+' dB';
+  document.getElementById('v-rms').textContent  = rmsDB.toFixed(1)+' dB';
+  document.getElementById('m-peak').style.width = Math.min(100,(peakDB+60)/60*100)+'%';
+  document.getElementById('m-rms').style.width  = Math.min(100,(rmsDB+60)/60*100)+'%';
+
+  const thresh = nodes.comp.threshold.value;
+  const gr = rmsDB < thresh ? 0 : Math.min(20,(rmsDB-thresh)*(1-1/nodes.comp.ratio.value));
+  document.getElementById('v-gr').textContent  = gr.toFixed(1)+' dB';
+  document.getElementById('m-gr').style.width  = Math.min(100,gr*5)+'%';
+
+  const lD=new Uint8Array(nodes.lufsAnalyserL.fftSize);
+  const rD=new Uint8Array(nodes.lufsAnalyserR.fftSize);
+  nodes.lufsAnalyserL.getByteTimeDomainData(lD);
+  nodes.lufsAnalyserR.getByteTimeDomainData(rD);
+  let sL=0, sR=0;
+  for (const v of lD) sL+=((v-128)/128)**2;
+  for (const v of rD) sR+=((v-128)/128)**2;
+  const lufsRMS = Math.sqrt((sL+sR)/(2*lD.length));
+  const lufs    = lufsRMS>0 ? 20*Math.log10(lufsRMS)-0.691 : -96;
+  document.getElementById('v-lufs').textContent = lufs.toFixed(1)+' LUFS';
+  document.getElementById('m-lufs').style.width  = Math.min(100,Math.max(0,(lufs+60)/60*100))+'%';
+}
+
+window.addEventListener('load', () => { resize(); });
+</script>
+</body>
+</html>
