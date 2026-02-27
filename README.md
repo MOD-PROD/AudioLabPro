@@ -11,7 +11,7 @@
 
 ## 🚀 Demo en ligne
 
-👉 **[Ouvrir Audio Lab Pro]([https://MOD-PROD.github.io/audio-lab-pro](https://mod-prod.github.io/AudioLabPro/))**
+[https://MOD-PROD.github.io/audio-lab-pro](https://mod-prod.github.io/AudioLabPro/)
 
 ---
 
